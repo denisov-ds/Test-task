@@ -1,0 +1,62 @@
+#Добрый день. Решил попробовать сделать, не совсем получилось по заданию
+
+apiVersion : apps/v1
+kind: Deployment
+metadata:
+  name: my-test-task
+  labels:
+    app : my-k8s-deployment
+spec:
+  selector:
+    matchLabels:
+      project: xyz
+  template:
+    metadata:
+      labels:
+        project: xyz   
+    spec:
+      containers:
+        - name : test
+          image: httpd:latest  
+          ports:
+            - containerPort: 80
+
+---
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: my-autoscaling
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v2beta1v1
+    kind: Deployment
+    name: my-web-deployment-autoscaling
+  minReplicas: 2
+  maxReplicas: 4
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      targetAverageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      targetAverageUtilization: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-autoscaling-pod-service
+  labels:
+     env  : prod
+     owner: DmitryDenisov
+spec:
+  selector:
+    project: xyz      
+  ports:
+    - name      : app-listener
+      protocol  : TCP
+      port      : 80  
+      targetPort: 80  
+  type: LoadBalancer
